@@ -16,7 +16,7 @@ from matplotlib.figure import Figure
 
 import dimce as d
 
-st.set_page_config(page_title="DimCE", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="DimCE Online", page_icon="⚡", layout="wide")
 
 DEFAUTS = {"fournisseur": "Total Energie", "prix_vente": 0.09, "prix_achat": 0.08,
            "partage": False, "mode": "Simulation rapide", "type_prod": "Solaire",
@@ -98,7 +98,7 @@ def figure(tracer, *args, taille=(9, 4.8), tight=True, **kw):
 # ----------------------------------------------------------------- barre latérale
 def barre_laterale():
     sb = st.sidebar
-    sb.title("⚡ DimCE")
+    sb.title("⚡ DimCE Online")
     sb.caption("Dimensionnement de communautés d'énergie")
     sb.subheader("Données économiques")
     sb.selectbox("Fournisseur", d.FOURNISSEURS, key="fournisseur")
@@ -332,18 +332,19 @@ def onglet_tarifs():
 def main():
     init_etat()
     barre_laterale()
-    t1, t2, t3, t4 = st.tabs(["Simulation CE", "Personnaliser la CE",
-                              "Dimensionnement installation", "Tarifs"])
+    t1, t2, t3 = st.tabs(["Simulation CE", "Personnaliser la CE", "Tarifs"])
+    # t1, t2, t3, t4 = st.tabs(["Simulation CE", "Personnaliser la CE",
+    #                           "Dimensionnement installation", "Tarifs"])
     # Ordre d'exécution (différent de l'ordre d'affichage) : les tarifs modifiés puis la CE
     # personnalisée doivent être lus avant les onglets qui en dépendent.
-    with t4:
+    with t3:
         onglet_tarifs()
     with t2:
         onglet_perso()
     with t1:
         onglet_simulation()
-    with t3:
-        onglet_dim()
+    # with t4:
+    #     # onglet_dim()
 
 
 main()
