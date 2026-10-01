@@ -7,8 +7,8 @@ DimCE - interface web (Streamlit).
 """
 import io
 import tempfile
+import base64
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -75,12 +75,12 @@ def nettoyer_ce(df: pd.DataFrame) -> pd.DataFrame:
 
 def telechargements(df: pd.DataFrame, nom: str, cle: str):
     c1, c2, _ = st.columns([1, 1, 4])
-    c1.download_button("⬇ CSV", df.to_csv(index=False).encode("utf-8"),
+    c1.download_button("⬇ Télécharger CSV", df.to_csv(index=False).encode("utf-8"),
                        file_name=f"{nom}.csv", mime="text/csv", key=f"{cle}_csv")
     try:
         buf = io.BytesIO()
         df.to_excel(buf, index=False)
-        c2.download_button("⬇ Excel", buf.getvalue(), file_name=f"{nom}.xlsx", key=f"{cle}_xlsx",
+        c2.download_button("⬇ Télécharger Excel", buf.getvalue(), file_name=f"{nom}.xlsx", key=f"{cle}_xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     except ImportError:
         c2.caption("(installez openpyxl pour l'export Excel)")
@@ -98,7 +98,15 @@ def figure(tracer, *args, taille=(9, 4.8), tight=True, **kw):
 # ----------------------------------------------------------------- barre latérale
 def barre_laterale():
     sb = st.sidebar
-    sb.title("⚡ DimCE Online")
+    ico_path = Path(__file__).resolve().parent / "dimce.ico"
+    with open(ico_path, "rb") as f:
+        ico_data = base64.b64encode(f.read()).decode("utf-8")
+    sb.markdown(
+        f'<img src="data:image/ico;base64,{ico_data}" width="40">'
+        f'<span style="font-size:1.5em;font-weight:600;vertical-align:middle;'
+        f'margin-left:10px;">DimCE Online</span>',
+        unsafe_allow_html=True,
+    )
     sb.caption("Dimensionnement de communautés d'énergie")
     sb.subheader("Données économiques")
     sb.selectbox("Fournisseur", d.FOURNISSEURS, key="fournisseur")
