@@ -16,7 +16,7 @@ from matplotlib.figure import Figure
 
 import dimce as d
 
-st.set_page_config(page_title="DimCE Online", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="DimCE Online", page_icon="dimce.ico", layout="wide")
 
 DEFAUTS = {"fournisseur": "Total Energie", "prix_vente": 0.09, "prix_achat": 0.08,
            "partage": False, "mode": "Simulation rapide", "type_prod": "Solaire",
@@ -237,7 +237,7 @@ def onglet_perso():
 
     c1, c2 = st.columns([3, 1])
     with c1:
-        f = st.file_uploader("Importer une CE (.csv, .xlsx, .xls)", type=["csv", "xlsx", "xls"])
+        f = st.file_uploader("Importer une CE (.csv ou .xlsx)", type=["csv", "xlsx"])
         if f is not None and st.button("Charger ce fichier"):
             try:
                 with tempfile.TemporaryDirectory() as tmp:
