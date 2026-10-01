@@ -159,7 +159,7 @@ class App(tk.Tk):
         self.nb.pack(fill="both", expand=True, padx=6, pady=(0, 6))
         self._onglet_simulation()
         self._onglet_perso()
-        self._onglet_dim()
+        # self._onglet_dim()
         self._onglet_tarifs()
         self.nb.bind("<<NotebookTabChanged>>", self._changement_onglet)
         self._menu()
