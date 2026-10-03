@@ -4,8 +4,6 @@ DimCE - interface graphique (Tkinter + matplotlib).
 
 À placer dans le même dossier que dimce.py, DataCE.mat et tableautarif.csv, puis :
     python dimce_gui.py
-
-Onglets : Simulation CE | Personnaliser la CE | Dimensionnement installation | Tarifs
 """
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
@@ -135,7 +133,7 @@ class App(tk.Tk):
         self.withdraw()                    # le temps d'afficher l'écran de démarrage
         appliquer_style(self)
         self.title("DimCE")
-        self.geometry("1250x800")
+        self.attributes('-zoomed', True)
         icone = self.img("app_icon")       # icône de fenêtre = carte des 9 communes
         if icone:
             self.iconphoto(True, icone)
@@ -520,7 +518,7 @@ class App(tk.Tk):
         self.info_vars = {}
         for i, (txt, cle) in enumerate([("Nombre de membres", "n"), ("Consommation totale", "conso"),
                                         ("Production totale", "prod"),
-                                        ("Volume total échangé CE", "vol")]):
+                                        ("Volume total échangé CE", "vol"),("Volume injecté", "rest")]):
             ttk.Label(info, text=txt).grid(row=0, column=2 * i, sticky="e", padx=(10, 4), pady=6)
             self.info_vars[cle] = tk.StringVar(value="0")
             ttk.Label(info, textvariable=self.info_vars[cle], style="Clair.TLabel", width=13
@@ -533,7 +531,7 @@ class App(tk.Tk):
         cols2 = ("Nom", "Autosuffisance", "Autoconsommation", "Achat CE", "Surplus vendu CE",
                  "Gain grâce à la CE")
         fr2, self.tv_gain = tableau(bas, cols2, 8, 150)
-        self.tv_gain.tag_configure("impair", background=ROUGE_CLAIR, foreground="white")
+        self.tv_gain.tag_configure("impair", background=GRIS_FOND, foreground="black")
         fr2.pack(side="left", fill="both", expand=True, padx=(8, 0))
         self._rafraichir_table_ce()
 
@@ -612,12 +610,13 @@ class App(tk.Tk):
         remplir(self.tv_ce, [(r[0],) + tuple(f"{x:g}" for x in r[1:])
                              for r in self.ce.itertuples(index=False)])
 
-    def _maj_info(self, n, conso, prod, volume):
+    def _maj_info(self, n, conso, prod, volume, rest):
         v = self.info_vars
         v["n"].set(str(n))
         v["conso"].set(f"{fmt(conso, 0)} kWh")
         v["prod"].set(f"{fmt(prod, 0)} kWh")
         v["vol"].set(f"{fmt(volume, 0)} kWh")
+        v["rest"].set(f"{fmt(rest, 0)} kWh")
 
     def maj_perso(self):
         """Équivalent de updateInfoCE."""
@@ -631,17 +630,17 @@ class App(tk.Tk):
                      + self.ce["PuissanceinstalleeSol"].sum() * d.RENDEMENT["Solaire"]
                      + self.ce["PuissanceinstalleeEol"].sum() * d.RENDEMENT["Eolien"]) if n else 0.0
         if n == 0 or prod == 0:
-            self._maj_info(n, conso, prod, 0.0)
+            self._maj_info(n, conso, prod, 0.0, 0.0)
             return
         try:
             pv, pa = self._prix()
             an = d.analyser_ce_perso(self.ce, self._tarif(), prix_vente=pv, prix_achat=pa,
                                      partage_batiment=self.partage.get())
         except Exception as e:
-            self._maj_info(n, conso, prod, 0.0)
+            self._maj_info(n, conso, prod, 0.0, 0.0)
             return self._erreur(e)
         self.analyse = an
-        self._maj_info(n, conso, prod, an.volume_echange)
+        self._maj_info(n, conso, prod, an.volume_echange, an.volume_injection)
         remplir(self.tv_gain, [
             (r["Nom"], f"{r['Autosuffisance (%)']:.2f}%", f"{r['Autoconsommation (%)']:.2f}%",
              f"{r['Achat CE (kWh)']:.0f} kWh ({r['Achat CE (%)']:.2f}%) {r['Achat CE (€)']:.0f} €",

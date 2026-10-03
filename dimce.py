@@ -611,6 +611,7 @@ class AnalyseCE:
     conso_totale: float
     production_estimee: float        # estimation par rendements moyens (comme l'affichage MATLAB)
     volume_echange: float            # kWh échangés dans la CE sur l'année
+    volume_injection: float           # kWh injectés dans le réseau sur l'année
 
 
 def verifier_producteur(ce: pd.DataFrame) -> None:
@@ -655,13 +656,14 @@ def analyser_ce_perso(ce: pd.DataFrame, tarif: np.ndarray, *, prix_vente: float 
         "Gain grâce à la CE (€)": gain_achat + gain_vente - t[T_PARTAGE],
     })
     echange = e.resid - e.residf                                # (35136, n)
+    reste = e.suf
     mensuel = echange[:12 * QUARTS_PAR_MOIS].reshape(12, QUARTS_PAR_MOIS, n).sum(axis=1)
     conso_mensuelle = pd.DataFrame(
         mensuel, columns=m.noms,
         index=["jan", "fev", "mars", "avril", "mai", "juin",
                "juil", "aout", "sept", "oct", "nov", "dec"])
     return AnalyseCE(tableau, conso_mensuelle, n, float(conso_tot.sum()),
-                     production_estimee, float(echange.sum()))
+                     production_estimee, float(echange.sum()),float(reste.sum()))
 
 
 # --------------------------------------------------------------------------- #
