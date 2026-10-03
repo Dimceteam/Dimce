@@ -74,13 +74,13 @@ def nettoyer_ce(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def telechargements(df: pd.DataFrame, nom: str, cle: str):
-    c1, c2, _ = st.columns([1, 1, 4])
-    c1.download_button("⬇ Télécharger CSV", df.to_csv(index=False).encode("utf-8"),
+    c2, c1, _ = st.columns([1, 1, 4])
+    c1.download_button("⬇ Exporter en .CSV", df.to_csv(index=False).encode("utf-8"),
                        file_name=f"{nom}.csv", mime="text/csv", key=f"{cle}_csv")
     try:
         buf = io.BytesIO()
         df.to_excel(buf, index=False)
-        c2.download_button("⬇ Télécharger Excel", buf.getvalue(), file_name=f"{nom}.xlsx", key=f"{cle}_xlsx",
+        c2.download_button("⬇ Exporter en .XLSX", buf.getvalue(), file_name=f"{nom}.xlsx", key=f"{cle}_xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     except ImportError:
         c2.caption("(installez openpyxl pour l'export Excel)")
