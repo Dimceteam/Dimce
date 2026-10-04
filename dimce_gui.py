@@ -323,8 +323,8 @@ class App(tk.Tk):
         ttk.Button(g, text="Quitter", style="Grand.TButton",
                    command=self.destroy).pack(fill="x", pady=(2, 6))
 
-        r = ttk.LabelFrame(g, text="Résultats")
-        r.pack(fill="x", pady=4)
+        r = ttk.LabelFrame(t, text="Résultats")
+        r.pack(side="left", fill="y", padx=4, pady=8)
         r.columnconfigure(0, weight=1)
         self.res_vars = {}
         lignes = [("Au maximum d'énergie vendue", None),
