@@ -388,11 +388,10 @@ class App(tk.Tk):
         r_container = ScrollableFrame(g, vertical=True, horizontal=False)
         r_container.pack(side="left", fill="y", padx=4, pady=8)
         r = ttk.LabelFrame(r_container.inner, text="Résultats")
-        r.pack(fill="both", expand=True)
+        #r.pack(fill="both", expand=True)
         r.columnconfigure(0, weight=1)
         # r = ttk.LabelFrame(g, text="Résultats")
-        # r.pack(fill="x", pady=4)
-        # r.columnconfigure(0, weight=1)
+        r.pack(fill="x", pady=4)
         self.res_vars = {}
         lignes = [("Au maximum d'énergie vendue", None),
                   ("Nombre de consommateurs", "nb_max"),
