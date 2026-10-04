@@ -66,69 +66,7 @@ def tableau(parent, colonnes, hauteur=8, largeur=110):
     frame.rowconfigure(0, weight=1)
     frame.columnconfigure(0, weight=1)
     return frame, tv
-class ScrollableFrame(ttk.Frame):
-    """Frame avec barre de défilement verticale (et horizontale optionnelle).
 
-    Le contenu doit être placé dans `self.inner`, pas dans `self`.
-    """
-    def __init__(self, parent, vertical=True, horizontal=False, **kwargs):
-        super().__init__(parent, **kwargs)
-
-        self.canvas = tk.Canvas(self, highlightthickness=0,
-                                background=GRIS_FOND, borderwidth=0)
-        self.vsb = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.hsb = ttk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
-        self.canvas.configure(yscrollcommand=self.vsb.set,
-                              xscrollcommand=self.hsb.set)
-
-        self.canvas.grid(row=0, column=0, sticky="nsew")
-        if vertical:
-            self.vsb.grid(row=0, column=1, sticky="ns")
-        if horizontal:
-            self.hsb.grid(row=1, column=0, sticky="ew")
-
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-
-        # Frame interne : c'est ICI que tu ajoutes tes widgets
-        self.inner = ttk.Frame(self.canvas)
-        self._win = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
-
-        self.inner.bind("<Configure>", self._on_inner_configure)
-        self.canvas.bind("<Configure>", self._on_canvas_configure)
-
-        # Molette : active seulement quand la souris est au-dessus du canvas
-        self.canvas.bind("<Enter>", self._activer_molette)
-        self.canvas.bind("<Leave>", self._desactiver_molette)
-
-        # Adapter la largeur du inner au canvas (si pas de scroll horizontal)
-        self._horizontal = horizontal
-
-    def _on_inner_configure(self, _):
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-    def _on_canvas_configure(self, event):
-        if not self._horizontal:
-            self.canvas.itemconfig(self._win, width=event.width)
-
-    def _activer_molette(self, _):
-        self.canvas.bind_all("<MouseWheel>", self._molette)
-        self.canvas.bind_all("<Button-4>", self._molette)
-        self.canvas.bind_all("<Button-5>", self._molette)
-
-    def _desactiver_molette(self, _):
-        self.canvas.unbind_all("<MouseWheel>")
-        self.canvas.unbind_all("<Button-4>")
-        self.canvas.unbind_all("<Button-5>")
-
-    def _molette(self, event):
-        if event.num == 4:
-            delta = -1
-        elif event.num == 5:
-            delta = 1
-        else:
-            delta = -1 if event.delta > 0 else 1
-        self.canvas.yview_scroll(delta, "units")
 
 def remplir(tv, lignes):
     """Remplit un tableau ; les lignes paires (2e, 4e...) portent le tag « impair »
@@ -385,14 +323,9 @@ class App(tk.Tk):
         ttk.Button(g, text="Quitter", style="Grand.TButton",
                    command=self.destroy).pack(fill="x", pady=(2, 6))
 
-        r_container = ScrollableFrame(g, vertical=True, horizontal=False)
-        r_container.pack(side="left", fill="y", padx=4, pady=8)
-        r = ttk.LabelFrame(r_container.inner, text="Résultats")
-        r.pack(fill="both", expand=True)
+        r = ttk.LabelFrame(t, text="Résultats")
+        r.pack(side="left", fill="y", padx=4, pady=8)
         r.columnconfigure(0, weight=1)
-        # r = ttk.LabelFrame(g, text="Résultats")
-        # r.pack(fill="x", pady=4)
-        # r.columnconfigure(0, weight=1)
         self.res_vars = {}
         lignes = [("Au maximum d'énergie vendue", None),
                   ("Nombre de consommateurs", "nb_max"),
