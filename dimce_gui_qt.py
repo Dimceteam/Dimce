@@ -831,7 +831,7 @@ def main():
         def ouvrir():
             splash.close()
             win.showMaximized()
-        QTimer.singleShot(1500, ouvrir)
+        QTimer.singleShot(10000, ouvrir)
     else:
         win.showMaximized()
     sys.exit(app.exec())
