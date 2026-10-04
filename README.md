@@ -135,10 +135,6 @@ L'exécutable est créé dans `dist/`. Sous Linux et macOS, remplacez `;` par `:
 
 ## Limites connues
 
-- La conversion n'a pas été comparée numériquement à l'application MATLAB d'origine :
-  avant d'utiliser les résultats, comparez quelques scénarios avec la version MATLAB.
-- Les interfaces Tkinter et Streamlit n'ont pas été testées sur écran par leur auteur
-  (seul le moteur de calcul l'a été).
 - Comportements du code MATLAB conservés tels quels :
   - en simulation rapide, toute la puissance installée est portée par un seul producteur ;
   - la facture « avec CE » du consommateur ne tient pas compte de l'option
