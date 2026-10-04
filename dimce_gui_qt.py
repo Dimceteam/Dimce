@@ -381,11 +381,6 @@ class MainWindow(QMainWindow):
         self.btn_defaut.setObjectName("grand")
         self.btn_defaut.clicked.connect(self.defaut)
         g.addWidget(self.btn_defaut)
-        bq = QPushButton("Quitter")
-        bq.setObjectName("grand")
-        bq.clicked.connect(self.close)
-        g.addWidget(bq)
-
         r = QGroupBox("Résultats")
         gr = QGridLayout(r)
         self.res_vars = {}
