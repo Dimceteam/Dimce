@@ -208,7 +208,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self._onglet_tarifs(), "Tarifs")
         self.tabs.currentChanged.connect(self._changement_onglet)
         self._menu()
-
+        
     # ------------------------------------------------------------- commun
     def _menu(self):
         mb = self.menuBar()
@@ -425,9 +425,12 @@ class MainWindow(QMainWindow):
         droite.addWidget(self.cb_graph)
         self.graph_opti = Graphique()
         droite.addWidget(self.graph_opti, 1)
-        self.tv_opti = creer_table(("Nbr de Conso.", "Autosuffisance conso.", "Surplus Vendu CE",
-                                    "Gain conso.", "Gain prod."), 150, 160)
-        self.tv_opti.horizontalHeader().setStretchLastSection(True)
+        self.tv_opti = creer_table(("Nbr de Consommateurs", "Autosuffisance Conso.", "Surplus Vendu CE",
+                                    "Gain consommateur", "Gain producteur"), 150, 160)
+        self.tv_opti.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.tv_opti.horizontalHeader().setStretchLastSection(False)
+        self.tv_opti.horizontalHeader().setMinimumSectionSize(120)   # largeur mini par colonne
+        self.tv_opti.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         droite.addWidget(self.tv_opti)
         lay.addLayout(droite, 1)
 
@@ -441,7 +444,7 @@ class MainWindow(QMainWindow):
             w.setEnabled(rapide)
         self.cb_type.setEnabled(rapide)
         self.tv_opti.horizontalHeaderItem(4).setText(
-            "Gain prod." if rapide else "Gain prod. principal")
+            "Gain producteur" if rapide else "Gain prod. principal")
 
     def _maj_prod_annuelle(self, *_):
         try:
@@ -623,6 +626,11 @@ class MainWindow(QMainWindow):
         cols = ("Nom", "Conso. particulier", "Conso. usine", "Conso. admin.", "Solaire kW",
                 "Éolien kW", "Bio kW", "Batterie kW", "Capa. batt. kWh")
         self.tv_ce = creer_table(cols, 95, 200)
+        header = self.tv_ce.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setStretchLastSection(False)
+        header.setMinimumSectionSize(120)   # largeur mini par colonne
+        self.tv_ce.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.tv_ce.cellDoubleClicked.connect(self._edit_cellule)
         mid.addWidget(self.tv_ce, 1)
         bt = QHBoxLayout()
@@ -642,9 +650,9 @@ class MainWindow(QMainWindow):
         info = QGroupBox("Informations sur la CE")
         il = QHBoxLayout(info)
         self.info_vars = {}
-        for txt, cle in [("Nombre de membres", "n"), ("Consommation totale", "conso"),
-                         ("Production totale", "prod"), ("Volume total échangé CE", "vol"),
-                         ("Volume injecté", "rest")]:
+        for txt, cle in [("Nombre de membres : ", "n"), ("Consommation totale : ", "conso"),
+                         ("Production totale : ", "prod"), ("Volume total échangé CE : ", "vol"),
+                         ("Volume injecté : ", "rest")]:
             il.addWidget(QLabel(txt))
             lb = QLabel("0")
             lb.setObjectName("clair")
@@ -831,7 +839,7 @@ def main():
         def ouvrir():
             splash.close()
             win.showMaximized()
-        QTimer.singleShot(10000, ouvrir)
+        QTimer.singleShot(5000, ouvrir)
     else:
         win.showMaximized()
     sys.exit(app.exec())
