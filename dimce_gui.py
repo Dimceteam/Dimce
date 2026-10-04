@@ -396,7 +396,7 @@ class App(tk.Tk):
         self.res_vars = {}
         lignes = [("Au maximum d'énergie vendue", None),
                   ("Nombre de consommateurs", "nb_max"),
-                  ("Part de l'énergie produite vendue à la CE", "part_max"),
+                  ("Énergie produite vendue à la CE", "part_max"),
                   ("Gain par consommateur (€/an)", "gc_max"),
                   ("Gain par producteur (€/an)", "gp_max"),
                   ("À l'optimum", None),
