@@ -7,7 +7,7 @@ gains de chacun.
 
 Ce dépôt est une conversion en Python de l'application MATLAB `DimCE.m` (App Designer).
 Le moteur de calcul est repris fonction par fonction ; l'interface est disponible en
-version web (Streamlit) et en version bureau (Tkinter).
+version web (Streamlit) et en version bureau (PySide6 / Qt).
 
 ## Contenu du dépôt
 
@@ -15,9 +15,10 @@ version web (Streamlit) et en version bureau (Tkinter).
 |---|---|
 | `dimce.py` | Moteur de calcul, graphiques matplotlib et ligne de commande |
 | `dimce_app.py` | Interface web (Streamlit) |
-| `dimce_gui.py` | Interface bureau (Tkinter) |
+| `dimce_gui_qt.py` | Interface bureau (PySide6) |
 | `DataCE.mat` | Profils au quart d'heure (35 136 valeurs) de consommation et de production |
 | `tableautarif.csv` | Tarifs des fournisseurs |
+| `assets/` | (optionnel) images de l'interface bureau : `splash.png`, `app_icon.png`, icônes des boutons |
 | `requirements.txt` | Dépendances Python |
 
 Les fichiers `DataCE.mat` et `tableautarif.csv` proviennent de l'archive d'origine
@@ -31,8 +32,10 @@ Python 3.10 ou plus récent.
 pip install -r requirements.txt
 ```
 
-Tkinter est inclus avec Python sous Windows et macOS. Sous Linux :
-`sudo apt install python3-tk`. Il n'est pas nécessaire pour la version web.
+PySide6 est installé par `pip` avec le reste des dépendances (aucun paquet système
+supplémentaire n'est nécessaire sous Windows et macOS). Sous Linux, si l'interface ne démarre
+pas avec une erreur du plugin Qt « xcb », installez les bibliothèques manquantes, par exemple :
+`sudo apt install libxcb-cursor0`. PySide6 n'est pas nécessaire pour la version web.
 
 ## Utilisation
 
@@ -42,20 +45,25 @@ Tkinter est inclus avec Python sous Windows et macOS. Sous Linux :
 streamlit run dimce_app.py
 ```
 
-### Interface bureau (Tkinter)
+### Interface bureau (PySide6)
 
 ```bash
-python dimce_gui.py
+python dimce_gui_qt.py
 ```
 
-Les deux interfaces proposent les mêmes onglets :
+Les interfaces proposent ces onglets :
 
 1. **Simulation CE** — simulation rapide (un producteur + N consommateurs) ou sur une CE
    personnalisée ; résultats au maximum d'énergie vendue et à l'optimum, 4 graphiques,
-   tableau détaillé, export.
+   tableau détaillé, export. Dans la version bureau, la simulation s'exécute dans un thread
+   séparé : l'interface reste utilisable et le bouton **« Arrêter la simulation »** permet de
+   l'interrompre (l'arrêt est effectif à la fin de l'étape en cours, c'est-à-dire après le
+   consommateur en cours de calcul).
 2. **Personnaliser la CE** — saisie des membres, import/export, gains de chaque membre,
    énergie échangée par mois.
-3. **Dimensionnement installation** — temps de retour en fonction de la puissance installée.
+3. **Dimensionnement installation** — temps de retour en fonction de la puissance installée
+   (disponible en version web et en ligne de commande ; désactivé dans l'interface bureau,
+   comme dans le code d'origine).
 4. **Tarifs** — tarifs du fournisseur choisi (modifiables pour la session).
 
 ### Ligne de commande
@@ -81,6 +89,9 @@ print(res.resume())   # maximum d'énergie vendue et optimum
 
 Fonctions principales : `optimiser_rapide`, `optimiser`, `analyser_ce_perso`,
 `dimensionner_installation`, `facture`, `importer_ce`, `tracer_optimisation`.
+
+Pour interrompre `optimiser` depuis votre propre code, levez une exception dans la fonction
+`progression` : elle est appelée au début de chaque étape.
 
 ## Format du fichier d'import d'une CE
 
@@ -118,20 +129,24 @@ Une CE doit comporter au moins un membre producteur pour être simulée.
 ## Déploiement de la version web (Streamlit Community Cloud)
 
 1. Placez dans un dépôt GitHub : `dimce.py`, `dimce_app.py`, `DataCE.mat`,
-   `tableautarif.csv` et `requirements.txt` (au besoin aussi `dimce_gui.py`, `README.md`
+   `tableautarif.csv` et `requirements.txt` (au besoin aussi `dimce_gui_qt.py`, `README.md`
    et `LICENSE`).
 2. Sur <https://share.streamlit.io>, créez une application depuis ce dépôt et indiquez
    `dimce_app.py` comme fichier principal.
 
-## Créer un exécutable Windows (version Tkinter)
+Remarque : `requirements.txt` contient PySide6, inutile (et volumineux) pour la version web.
+Pour un déploiement allégé, retirez la ligne `PySide6` du fichier utilisé par Streamlit Cloud
+(ou séparez-la dans un `requirements-gui.txt`).
+
+## Créer un exécutable Windows (version PySide6)
 
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --add-data "DataCE.mat;." --add-data "tableautarif.csv;." dimce_gui.py
+pyinstaller --onefile --windowed --add-data "DataCE.mat;." --add-data "tableautarif.csv;." --add-data "assets;assets" dimce_gui_qt.py
 ```
 
 L'exécutable est créé dans `dist/`. Sous Linux et macOS, remplacez `;` par `:` dans
-`--add-data`.
+`--add-data`. Si vous n'avez pas de dossier `assets/`, retirez l'option correspondante.
 
 ## Limites connues
 
@@ -140,6 +155,8 @@ L'exécutable est créé dans `dist/`. Sous Linux et macOS, remplacez `;` par `:
   - la facture « avec CE » du consommateur ne tient pas compte de l'option
     « partage dans un même bâtiment », contrairement au calcul du gain.
 - L'export Excel écrit des `.xlsx` (le `.xls` n'est pas géré en écriture).
+- L'arrêt d'une simulation dans l'interface bureau n'intervient qu'entre deux étapes ; la
+  simulation initiale de la CE (avant l'ajout des consommateurs) ne peut pas être interrompue.
 
 ## Contact
 
