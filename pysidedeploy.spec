@@ -21,7 +21,7 @@ icon = assets/app_icon.png
 [python]
 
 # python path
-python_path = /home/lio/venvs/dimce/bin/python
+python_path = C:\venvs\dimce\Scripts\python.exe
 
 # python packages to install
 packages = Nuitka==4.1.1
@@ -40,7 +40,7 @@ qml_files =
 excluded_qml_plugins = 
 
 # qt modules used. comma separated
-modules = Core,DBus,Gui,Widgets
+modules = Core,Gui,Widgets
 
 # qt plugins used by the application. only relevant for desktop deployment
 # for qt plugins used in android application see [android][plugins]
