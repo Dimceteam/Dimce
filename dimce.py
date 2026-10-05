@@ -32,8 +32,13 @@ import scipy.io
 # --------------------------------------------------------------------------- #
 # Constantes
 # --------------------------------------------------------------------------- #
-# Dossier des données : compatible PyInstaller (--onefile extrait dans sys._MEIPASS)
-DOSSIER = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+def _dossier_donnees() -> Path:
+    """Dossier des données, compatible script, PyInstaller et Nuitka."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+DOSSIER = _dossier_donnees()
 N_QUARTS = 35136                       # nombre de quarts d'heure de la série
 QUARTS_PAR_MOIS = N_QUARTS // 12       # 2928, comme dans le code MATLAB
 
