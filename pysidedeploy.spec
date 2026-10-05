@@ -1,7 +1,7 @@
 [app]
 
 # title of your application
-title = pyside_app_demo
+title = DimCE
 
 # project root directory. default = The parent directory of input_file
 project_dir = .
@@ -13,10 +13,10 @@ input_file = dimce_gui_qt.py
 exec_directory = .
 
 # path to the project file relative to project_dir
-project_file = 
+project_file = pyproject.toml
 
 # application icon
-icon = /home/lio/venvs/dimce/lib/python3.14/site-packages/PySide6/scripts/deploy_lib/pyside_icon.jpg
+icon = assets/app_icon.png
 
 [python]
 
@@ -68,7 +68,7 @@ macos.permissions =
 mode = onefile
 
 # specify any extra nuitka arguments
-extra_args = --quiet --noinclude-qt-translations
+extra_args = --quiet --noinclude-qt-translations --include-data-files=DataCE.mat=DataCE.mat --include-data-files=tableautarif.csv=tableautarif.csv --include-data-dir=assets=assets
 
 [buildozer]
 
