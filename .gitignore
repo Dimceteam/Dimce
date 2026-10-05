@@ -1,2 +1,14 @@
-pyside_app_demo.bin
+# Artefacts de build
+*.bin
+*.exe
+*.dist/
+*.build/
 deployment/
+pysidedeploy.spec
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
