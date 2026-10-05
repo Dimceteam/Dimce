@@ -1,0 +1,7 @@
+[project]
+name = "dimce"
+version = "1.3.0"
+description = "DimCE - dimensionnement de communautés d'énergie"
+
+[tool.pyside6-deploy]
+extra_args = "--include-data-files=DataCE.mat=DataCE.mat --include-data-files=tableautarif.csv=tableautarif.csv --include-data-dir=assets=assets --output-filename=DimCE"
