@@ -10,7 +10,7 @@ Nouveauté par rapport à la version Tkinter : l'optimisation tourne dans un thr
 séparé (l'interface reste fluide) et peut être interrompue avec le bouton « Arrêter ».
 """
 import sys
-
+import platform
 from PySide6.QtCore import Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QAction, QIcon, QPixmap
 from PySide6.QtWidgets import (
@@ -52,7 +52,23 @@ QTableWidget { background: white; alternate-background-color: #F0F0F0; gridline-
 QHeaderView::section { font-weight: bold; padding: 3px; }
 QScrollArea { border: none; }
 """
+def configurer_style(app: QApplication) -> None:
+    """Adapte le style selon la plateforme."""
+    systeme = platform.system()
 
+    if systeme == "Windows":
+        # Windows : style natif daté + ignore les QSS → on force Fusion
+        app.setStyle("Fusion")
+        app.setFont(QFont("Segoe UI", 10))
+        app.setStyleSheet(STYLE)
+        # import qdarkstyle
+        # app.setStyleSheet(qdarkstyle.load_stylesheet(qt_api="pyside6"))
+
+    elif systeme == "Darwin":  # macOS
+        app.setStyleSheet(STYLE)
+
+    else:  # Linux et autres
+        app.setStyleSheet(STYLE)
 
 def fmt(v, dec=2):
     return f"{v:,.{dec}f}".replace(",", " ")
@@ -827,7 +843,7 @@ class MainWindow(QMainWindow):
 def main():
     matplotlib.use("QtAgg")
     app = QApplication(sys.argv)
-    app.setStyleSheet(STYLE)
+    configurer_style(app)
     win = MainWindow()
 
     splash_png = ASSETS / "splash.png"
