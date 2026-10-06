@@ -59,7 +59,6 @@ def configurer_style(app: QApplication) -> None:
     if systeme == "Windows":
         # Windows : style natif daté + ignore les QSS → on force Fusion
         app.setStyle("Fusion")
-        app.setFont(QFont("Segoe UI", 10))
         app.setStyleSheet(STYLE)
         # import qdarkstyle
         # app.setStyleSheet(qdarkstyle.load_stylesheet(qt_api="pyside6"))
@@ -198,7 +197,7 @@ class OptimWorker(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("DimCE")
+        self.setWindowTitle("DimCE 1.3")
         ic = icone("app_icon")
         if not ic.isNull():
             self.setWindowIcon(ic)
