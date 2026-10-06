@@ -683,17 +683,24 @@ GRAPHIQUES = {
 
 
 def _barres_empilees(ax, categories, colonnes, legendes):
-    """Barres empilées gérant les valeurs négatives (comme ``bar(...,'stacked')``)."""
+    """Barres empilées gérant les valeurs négatives.
+
+    Renvoie un dict {legende: couleur}.
+    """
     import matplotlib.pyplot as plt
     couleurs = plt.get_cmap("tab20").colors
     pos = np.zeros(len(categories))
     neg = np.zeros(len(categories))
+    mapping = {}
     for k, (col, leg) in enumerate(zip(colonnes, legendes)):
+        c = couleurs[k % 20]
+        mapping[leg] = c
         col = np.asarray(col, dtype=float)
         bas = np.where(col >= 0, pos, neg)
-        ax.bar(categories, col, 0.4, bottom=bas, label=leg, color=couleurs[k % 20])
+        ax.bar(categories, col, 0.4, bottom=bas, label=leg, color=c)
         pos += np.where(col >= 0, col, 0)
         neg += np.where(col < 0, col, 0)
+    return mapping
 
 
 def tracer_optimisation(res: ResultatOptimisation, graphique: int = 1, ax=None):
@@ -729,16 +736,20 @@ def tracer_optimisation(res: ResultatOptimisation, graphique: int = 1, ax=None):
 
 
 def tracer_ce_mensuelle(analyse: AnalyseCE, ax=None):
-    """Énergie achetée dans la CE par mois et par membre (barres empilées)."""
+    """Énergie achetée dans la CE par mois et par membre (barres empilées).
+
+    Renvoie un dict {nom_membre: couleur} pour réutilisation dans l'interface.
+    """
     import matplotlib.pyplot as plt
     if ax is None:
         _, ax = plt.subplots(figsize=(9, 5))
     cm = analyse.conso_mensuelle
-    _barres_empilees(ax, list(cm.index), [cm[c] for c in cm.columns], list(cm.columns))
+    couleurs = _barres_empilees(ax, list(cm.index),
+                                [cm[c] for c in cm.columns], list(cm.columns))
     ax.set_ylabel("kWh")
-    ax.legend(loc="best")
+    # Pas de légende : les couleurs sont reportées dans le tableau à droite
     ax.set_title("Énergie échangée dans la CE par mois")
-    return ax
+    return couleurs
 
 
 def tracer_dimensionnement(df: pd.DataFrame, ax=None):

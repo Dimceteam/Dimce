@@ -770,33 +770,67 @@ class MainWindow(QMainWindow):
         self.graph_ce.nettoyer()
         remplir(self.tv_gain, [])
         self.analyse = None
+
         n = len(self.ce)
         conso = float(self.ce[d.COLONNES_CE[1:4]].sum().sum()) if n else 0.0
-        prod = float(self.ce["PuissanceinstalleeBio"].sum() * d.RENDEMENT["Cogen/Biometh."]
-                     + self.ce["PuissanceinstalleeSol"].sum() * d.RENDEMENT["Solaire"]
-                     + self.ce["PuissanceinstalleeEol"].sum() * d.RENDEMENT["Eolien"]) if n else 0.0
+        prod = float(
+            self.ce["PuissanceinstalleeBio"].sum() * d.RENDEMENT["Cogen/Biometh."]
+            + self.ce["PuissanceinstalleeSol"].sum() * d.RENDEMENT["Solaire"]
+            + self.ce["PuissanceinstalleeEol"].sum() * d.RENDEMENT["Eolien"]
+        ) if n else 0.0
+
         if n == 0 or prod == 0:
             self._maj_info(n, conso, prod, 0.0, 0.0)
             return
+
         try:
             pv, pa = self._prix()
-            an = d.analyser_ce_perso(self.ce, self._tarif(), prix_vente=pv, prix_achat=pa,
-                                     partage_batiment=self.chk_partage.isChecked())
+            an = d.analyser_ce_perso(
+                self.ce, self._tarif(),
+                prix_vente=pv, prix_achat=pa,
+                partage_batiment=self.chk_partage.isChecked(),
+            )
         except Exception as e:  # noqa: BLE001
             self._maj_info(n, conso, prod, 0.0, 0.0)
             return self._erreur(e)
+
         self.analyse = an
         self._maj_info(n, conso, prod, an.volume_echange, an.volume_injection)
+
+        # --- remplissage du tableau des gains (à droite)
         remplir(self.tv_gain, [
-            (r["Nom"], f"{r['Autosuffisance (%)']:.2f}%", f"{r['Autoconsommation (%)']:.2f}%",
-             f"{r['Achat CE (kWh)']:.0f} kWh ({r['Achat CE (%)']:.2f}%) {r['Achat CE (€)']:.0f} €",
-             f"{r['Surplus vendu CE (kWh)']:.0f} kWh ({r['Surplus vendu CE (%)']:.2f}%) "
-             f"{r['Surplus vendu CE (€)']:.0f} €", f"{r['Gain grâce à la CE (€)']:.0f} €")
-            for _, r in an.tableau.iterrows()])
-        d.tracer_ce_mensuelle(an, ax=self.graph_ce.ax)
-        self.graph_ce.fig.tight_layout()
+            (
+                r["Nom"],
+                f"{r['Autosuffisance (%)']:.2f}%",
+                f"{r['Autoconsommation (%)']:.2f}%",
+                f"{r['Achat CE (kWh)']:.0f} kWh ({r['Achat CE (%)']:.2f}%) {r['Achat CE (€)']:.0f} €",
+                f"{r['Surplus vendu CE (kWh)']:.0f} kWh ({r['Surplus vendu CE (%)']:.2f}%) "
+                f"{r['Surplus vendu CE (€)']:.0f} €",
+                f"{r['Gain grâce à la CE (€)']:.0f} €",
+            )
+            for _, r in an.tableau.iterrows()
+        ])
+
+        # --- tracé du graphique (retourne les couleurs des barres empilées)
+        couleurs = d.tracer_ce_mensuelle(an, ax=self.graph_ce.ax)
+
+        # le graphique occupe tout le canvas (plus de place perdue pour la légende)
+        self.graph_ce.fig.subplots_adjust(left=0.10, right=0.98, top=0.90, bottom=0.12)
         self.graph_ce.redessiner()
 
+        # --- report des couleurs sur le fond des noms du tableau de droite
+        from PySide6.QtGui import QColor, QBrush
+        for i, (_, r) in enumerate(an.tableau.iterrows()):
+            nom = r["Nom"]
+            c = couleurs.get(nom)
+            if c is None:
+                continue
+            qc = QColor.fromRgbF(*c)
+            item = self.tv_gain.item(i, 0)   # colonne "Nom"
+            if item is not None:
+                item.setBackground(QBrush(qc))
+
+    
     # ---------------------------------------------------------- onglet tarifs
     def _onglet_tarifs(self):
         page = QWidget()
