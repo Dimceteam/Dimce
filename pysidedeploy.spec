@@ -68,7 +68,7 @@ macos.permissions =
 mode = onefile
 
 # specify any extra nuitka arguments
-extra_args = --quiet --noinclude-qt-translations --include-data-files=DataCE.mat=DataCE.mat --include-data-files=tableautarif.csv=tableautarif.csv --include-data-dir=assets=assets
+extra_args = --quiet --noinclude-qt-translations --include-data-files=DataCE.mat=DataCE.mat --include-data-files=tableautarif.csv=tableautarif.csv --include-data-dir=assets=assets --windows-console-mode=disable
 
 [buildozer]
 
