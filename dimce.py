@@ -747,8 +747,8 @@ def tracer_ce_mensuelle(analyse: AnalyseCE, ax=None):
     couleurs = _barres_empilees(ax, list(cm.index),
                                 [cm[c] for c in cm.columns], list(cm.columns))
     ax.set_ylabel("kWh")
-    # Pas de légende : les couleurs sont reportées dans le tableau à droite
     ax.set_title("Énergie échangée dans la CE par mois")
+    ax.legend(loc="upper left", fontsize=8)
     return couleurs
 
 
