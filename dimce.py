@@ -748,7 +748,6 @@ def tracer_ce_mensuelle(analyse: AnalyseCE, ax=None):
                                 [cm[c] for c in cm.columns], list(cm.columns))
     ax.set_ylabel("kWh")
     ax.set_title("Énergie échangée dans la CE par mois")
-    ax.legend(loc="upper left", fontsize=8)
     return couleurs
 
 
