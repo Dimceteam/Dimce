@@ -151,9 +151,7 @@ L'exécutable est créé dans `dist/`. Sous Linux et macOS, remplacez `;` par `:
 ## Limites connues
 
 - Comportements du code MATLAB conservés tels quels :
-  - en simulation rapide, toute la puissance installée est portée par un seul producteur ;
-  - la facture « avec CE » du consommateur ne tient pas compte de l'option
-    « partage dans un même bâtiment », contrairement au calcul du gain.
+  - en simulation rapide, toute la puissance installée est portée par un seul producteur .
 - L'export Excel écrit des `.xlsx` (le `.xls` n'est pas géré en écriture).
 - L'arrêt d'une simulation dans l'interface bureau n'intervient qu'entre deux étapes ; la
   simulation initiale de la CE (avant l'ajout des consommateurs) ne peut pas être interrompue.
