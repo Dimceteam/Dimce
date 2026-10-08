@@ -1,0 +1,19 @@
+# Compatible CasaOS : App Store > "Installation personnalisée" > importer ce fichier.
+name: dimce
+services:
+  dimce:
+    build: .
+    container_name: dimce
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      DIMCE_MAX_CONSO: "100"   # nb max de consommateurs simulés par utilisateur
+      DIMCE_MAX_SIMUL: "2"     # optimisations simultanées sur tout le serveur
+    mem_limit: 2g
+    cpus: 2
+    x-casaos:
+      title:
+        fr_fr: DimCE
+      icon: ""
+      port_map: "8501"
