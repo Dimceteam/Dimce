@@ -40,6 +40,27 @@ QPushButton { font-weight: bold; padding: 5px 12px; }
 QPushButton#grand { font-size: 13pt; padding: 8px; }
 QPushButton#stop { background: #800000; color: white; }
 QPushButton#stop:disabled { background: #C9C9C9; color: #888888; }
+QCheckBox { spacing: 6px; }
+QCheckBox::indicator {
+    width: 15px;
+    height: 15px;
+    border: 2px solid #800000;
+    border-radius: 3px;
+    background: white;
+}
+QCheckBox::indicator:hover {
+    border: 2px solid #A2142F;
+    background: #FFF5F5;
+}
+QCheckBox::indicator:checked {
+    background: #800000;
+    border: 2px solid #800000;
+    image: url(assets/coche.svg);
+}
+QCheckBox::indicator:checked:hover {
+    background: #A2142F;
+    border: 2px solid #A2142F;
+}
 QLabel#rouge { background: #800000; color: white; font-weight: bold; padding: 3px 8px; }
 QLabel#clair { background: #A2142F; color: white; font-weight: bold; padding: 3px 8px; }
 QLabel#titre { color: #800000; font-weight: bold; }
