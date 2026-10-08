@@ -6,6 +6,8 @@ DimCE - interface web (Streamlit).
     streamlit run dimce_app.py
 """
 import io
+import os
+import threading
 import tempfile
 import base64
 from pathlib import Path
@@ -16,7 +18,19 @@ from matplotlib.figure import Figure
 
 import dimce as d
 
-st.set_page_config(page_title="DimCE Online", page_icon="dimce.ico", layout="wide")
+ICO = Path(__file__).resolve().parent / "dimce.ico"
+st.set_page_config(page_title="DimCE Online", page_icon=str(ICO) if ICO.exists() else None,
+                   layout="wide")
+
+# Limites pour un usage multi-utilisateurs (réglables par variables d'environnement)
+NB_CONSO_MAX = int(os.environ.get("DIMCE_MAX_CONSO", 100))
+NB_SIMUL_PARALLELES = int(os.environ.get("DIMCE_MAX_SIMUL", 2))
+
+
+@st.cache_resource
+def _verrou_simulations() -> threading.BoundedSemaphore:
+    """Partagé entre toutes les sessions : limite les optimisations simultanées."""
+    return threading.BoundedSemaphore(NB_SIMUL_PARALLELES)
 
 DEFAUTS = {"fournisseur": "Total Energie", "prix_vente": 0.09, "prix_achat": 0.08,
            "partage": False, "mode": "Simulation rapide", "type_prod": "Solaire",
@@ -95,15 +109,22 @@ def figure(tracer, *args, taille=(9, 4.8), tight=True, **kw):
     return fig
 
 
+def _couleur_rgb(c) -> str:
+    """Convertit une couleur matplotlib (floats 0-1) en chaîne CSS 'rgb(r,g,b)'."""
+    r, g, b = (int(round(255 * v)) for v in c[:3])
+    return f"rgb({r},{g},{b})"
+
+
 # ----------------------------------------------------------------- barre latérale
 def barre_laterale():
     sb = st.sidebar
-    ico_path = Path(__file__).resolve().parent / "dimce.ico"
-    with open(ico_path, "rb") as f:
-        ico_data = base64.b64encode(f.read()).decode("utf-8")
+    if ICO.exists():
+        ico_data = base64.b64encode(ICO.read_bytes()).decode("utf-8")
+        logo = f'<img src="data:image/x-icon;base64,{ico_data}" width="40">'
+    else:
+        logo = ""
     sb.markdown(
-        f'<img src="data:image/ico;base64,{ico_data}" width="40">'
-        f'<span style="font-size:1.5em;font-weight:600;vertical-align:middle;'
+        f'{logo}<span style="font-size:1.5em;font-weight:600;vertical-align:middle;'
         f'margin-left:10px;">DimCE Online</span>',
         unsafe_allow_html=True,
     )
@@ -146,7 +167,7 @@ def onglet_simulation():
         st.markdown("**Consommateurs**")
         st.number_input("Conso. annuelle d'un consommateur (kWh)", min_value=1.0, step=100.0,
                         key="conso_cons")
-        st.number_input("Nombre maximum de consommateurs", min_value=1, max_value=10000,
+        st.number_input("Nombre maximum de consommateurs", min_value=1, max_value=NB_CONSO_MAX,
                         step=1, key="nb_max")
 
     if st.button("Lancer l'optimisation", type="primary"):
@@ -170,20 +191,27 @@ def lancer(rapide: bool):
         else:
             ce = nettoyer_ce(ss.get("ce_edit_df", ss.ce_df))
             d.verifier_producteur(ce)
+            if len(ce) > 200:
+                raise ValueError("La CE personnalisée est limitée à 200 membres sur ce serveur.")
             membres, nb_prod, prod_annuel = d.Membres.depuis_table(ce), 1, None
     except ValueError as e:
         st.error(str(e))
         return
+    verrou = _verrou_simulations()
+    if not verrou.acquire(blocking=False):
+        st.warning("Le serveur est occupé par d'autres simulations. Réessayez dans un instant.")
+        return
     barre = st.progress(0.0, text="Optimisation en cours…")
     try:
         ss.res = d.optimiser(membres, tarif_vecteur(), conso_consommateur=ss.conso_cons,
-                             nb_conso_max=int(ss.nb_max), prix_vente=pv, prix_achat=pa,
-                             partage_batiment=ss.partage, nb_prod=nb_prod,
+                             nb_conso_max=min(int(ss.nb_max), NB_CONSO_MAX), prix_vente=pv,
+                             prix_achat=pa, partage_batiment=ss.partage, nb_prod=nb_prod,
                              prod_annuel=prod_annuel,
                              progression=lambda x: barre.progress(x, text="Optimisation en cours…"))
     except Exception as e:
         st.error(f"Erreur pendant l'optimisation : {e}")
     finally:
+        verrou.release()
         barre.empty()
 
 
@@ -228,16 +256,16 @@ def onglet_perso():
                "capacité de batterie en kWh.")
     ss = st.session_state
     cfg = {"Nom": st.column_config.TextColumn("Nom")}
-    libelles = {"Consommationannuelleparticulier": "Conso. particulier (kWh)",
-                "Consommationannuelleusine": "Conso. industrie (kWh)",
-                "ConsommationannuelleAdministration": "Conso. administration (kWh)",
+    libelles = {"Consommationannelleparticulier": "Conso. particulier (kWh)",
+                "Consommationannelleusine": "Conso. industrie (kWh)",
+                "ConsommationannelleAdministration": "Conso. administration (kWh)",
                 "PuissanceinstalleeSol": "Solaire (kW)", "PuissanceinstalleeEol": "Éolien (kW)",
                 "PuissanceinstalleeBio": "Bio/Cogén. (kW)", "PuissanceinstalleeBatt": "Batterie (kW)",
                 "Capabat": "Capa. batterie (kWh)"}
     for c, lab in libelles.items():
         cfg[c] = st.column_config.NumberColumn(lab, min_value=0.0, format="%.1f", default=0.0)
-    cfg["Consommationannuelleparticulier"] = st.column_config.NumberColumn(
-        libelles["Consommationannuelleparticulier"], min_value=0.0, format="%.1f", default=3500.0)
+    cfg["Consommationannelleparticulier"] = st.column_config.NumberColumn(
+        libelles["Consommationannelleparticulier"], min_value=0.0, format="%.1f", default=3500.0)
 
     edit = st.data_editor(ss.ce_df, num_rows="dynamic", column_config=cfg, use_container_width=True,
                           key=f"ce_editor_{ss.ce_ver}")
@@ -293,9 +321,26 @@ def onglet_perso():
     m[1].metric("Consommation totale", f"{an.conso_totale:,.0f} kWh")
     m[2].metric("Production estimée", f"{an.production_estimee:,.0f} kWh")
     m[3].metric("Volume échangé", f"{an.volume_echange:,.0f} kWh")
-    st.pyplot(figure(d.tracer_ce_mensuelle, an))
-    st.dataframe(an.tableau, hide_index=True, use_container_width=True, column_config={
-        c: st.column_config.NumberColumn(format="%.2f") for c in an.tableau.columns[1:]})
+
+    # --- graphique : on récupère le dict {nom: couleur} renvoyé par tracer_ce_mensuelle
+    fig = Figure(figsize=(9, 4.8))
+    ax = fig.add_subplot(111)
+    couleurs = d.tracer_ce_mensuelle(an, ax=ax)
+    fig.tight_layout()
+    st.pyplot(fig)
+
+    # --- tableau des gains avec la colonne "Nom" colorée comme les barres empilées
+    def _style_ligne(row):
+        c = couleurs.get(row["Nom"])
+        if c is None:
+            return [""] * len(row)
+        css = f"background-color: {_couleur_rgb(c)}; color: white; font-weight: bold"
+        return [css] + [""] * (len(row) - 1)
+
+    styler = (an.tableau.style
+              .apply(_style_ligne, axis=1)
+              .format({c: "{:.2f}" for c in an.tableau.columns[1:]}))
+    st.dataframe(styler, hide_index=True, use_container_width=True)
     telechargements(an.tableau, "gains_CE", "gains")
 
 

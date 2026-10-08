@@ -32,8 +32,13 @@ import scipy.io
 # --------------------------------------------------------------------------- #
 # Constantes
 # --------------------------------------------------------------------------- #
-# Dossier des données : compatible PyInstaller (--onefile extrait dans sys._MEIPASS)
-DOSSIER = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+def _dossier_donnees() -> Path:
+    """Dossier des données, compatible script, PyInstaller et Nuitka."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+DOSSIER = _dossier_donnees()
 N_QUARTS = 35136                       # nombre de quarts d'heure de la série
 QUARTS_PAR_MOIS = N_QUARTS // 12       # 2928, comme dans le code MATLAB
 
@@ -453,6 +458,8 @@ def optimiser(membres: Membres, tarif: np.ndarray, *, conso_consommateur: float 
                         + prix_vente * autosuf_inter_prod * Cp
                         - prix_achat * (surplus_prod * prod_I)
                         - t[T_INJECTION] * (prod_I * (1 - etat.autoconsom_f[I])))
+        if partage_batiment:
+            prix_prod_ce -= 0.8 * (t[T_DISTRIB] + t[T_TRANSPORT]) * autosuf_inter_prod * Cp
         tab[k, 4] = prix_prod - prix_prod_ce - t[T_PARTAGE]
 
         if ic > 1:
@@ -506,6 +513,10 @@ def facture(res: ResultatOptimisation, avec_ce: bool, consommateur: bool) -> pd.
         mult = [0, 1, q, q, 1, q, q, q, q, 0, 1, 0, ce]
         if avec_ce:
             energie = (t[T_ENERGIE] * ((1 - a_opti) * C) + res.prix_vente * a_opti * C)
+            if res.partage_batiment:
+                # même réduction de 80 % des frais de distribution et de transport
+                # sur l'énergie achetée dans la CE que dans le calcul du gain (optimiser)
+                mult[2] = mult[3] = q * (1 - 0.8 * a_opti)
         else:
             energie = t[T_ENERGIE] * C
     else:
@@ -517,6 +528,8 @@ def facture(res: ResultatOptimisation, avec_ce: bool, consommateur: bool) -> pd.
                        + res.prix_vente * res.autosuf_inter_prod * Cp
                        - res.prix_achat * vendu
                        - t[T_INJECTION] * (res.prod_annuel * (1 - res.autoconso_prod) - vendu))
+            if res.partage_batiment:
+                mult[2] = mult[3] = q - 0.8 * res.autosuf_inter_prod * Cp
         else:
             energie = (t[T_ENERGIE] * (1 - res.autosuf_prod) * Cp
                        - t[T_INJECTION] * (res.prod_annuel * (1 - res.autoconso_prod)))
@@ -611,6 +624,7 @@ class AnalyseCE:
     conso_totale: float
     production_estimee: float        # estimation par rendements moyens (comme l'affichage MATLAB)
     volume_echange: float            # kWh échangés dans la CE sur l'année
+    volume_injection: float           # kWh injectés dans le réseau sur l'année
 
 
 def verifier_producteur(ce: pd.DataFrame) -> None:
@@ -655,13 +669,14 @@ def analyser_ce_perso(ce: pd.DataFrame, tarif: np.ndarray, *, prix_vente: float 
         "Gain grâce à la CE (€)": gain_achat + gain_vente - t[T_PARTAGE],
     })
     echange = e.resid - e.residf                                # (35136, n)
+    reste = e.suf
     mensuel = echange[:12 * QUARTS_PAR_MOIS].reshape(12, QUARTS_PAR_MOIS, n).sum(axis=1)
     conso_mensuelle = pd.DataFrame(
         mensuel, columns=m.noms,
         index=["jan", "fev", "mars", "avril", "mai", "juin",
                "juil", "aout", "sept", "oct", "nov", "dec"])
     return AnalyseCE(tableau, conso_mensuelle, n, float(conso_tot.sum()),
-                     production_estimee, float(echange.sum()))
+                     production_estimee, float(echange.sum()),float(reste.sum()))
 
 
 # --------------------------------------------------------------------------- #
@@ -676,17 +691,24 @@ GRAPHIQUES = {
 
 
 def _barres_empilees(ax, categories, colonnes, legendes):
-    """Barres empilées gérant les valeurs négatives (comme ``bar(...,'stacked')``)."""
+    """Barres empilées gérant les valeurs négatives.
+
+    Renvoie un dict {legende: couleur}.
+    """
     import matplotlib.pyplot as plt
     couleurs = plt.get_cmap("tab20").colors
     pos = np.zeros(len(categories))
     neg = np.zeros(len(categories))
+    mapping = {}
     for k, (col, leg) in enumerate(zip(colonnes, legendes)):
+        c = couleurs[k % 20]
+        mapping[leg] = c
         col = np.asarray(col, dtype=float)
         bas = np.where(col >= 0, pos, neg)
-        ax.bar(categories, col, 0.4, bottom=bas, label=leg, color=couleurs[k % 20])
+        ax.bar(categories, col, 0.4, bottom=bas, label=leg, color=c)
         pos += np.where(col >= 0, col, 0)
         neg += np.where(col < 0, col, 0)
+    return mapping
 
 
 def tracer_optimisation(res: ResultatOptimisation, graphique: int = 1, ax=None):
@@ -722,16 +744,19 @@ def tracer_optimisation(res: ResultatOptimisation, graphique: int = 1, ax=None):
 
 
 def tracer_ce_mensuelle(analyse: AnalyseCE, ax=None):
-    """Énergie achetée dans la CE par mois et par membre (barres empilées)."""
+    """Énergie achetée dans la CE par mois et par membre (barres empilées).
+
+    Renvoie un dict {nom_membre: couleur} pour réutilisation dans l'interface.
+    """
     import matplotlib.pyplot as plt
     if ax is None:
         _, ax = plt.subplots(figsize=(9, 5))
     cm = analyse.conso_mensuelle
-    _barres_empilees(ax, list(cm.index), [cm[c] for c in cm.columns], list(cm.columns))
+    couleurs = _barres_empilees(ax, list(cm.index),
+                                [cm[c] for c in cm.columns], list(cm.columns))
     ax.set_ylabel("kWh")
-    ax.legend(loc="best")
     ax.set_title("Énergie échangée dans la CE par mois")
-    return ax
+    return couleurs
 
 
 def tracer_dimensionnement(df: pd.DataFrame, ax=None):

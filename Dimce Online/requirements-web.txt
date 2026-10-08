@@ -1,0 +1,7 @@
+streamlit>=1.40
+numpy
+pandas
+scipy
+matplotlib
+openpyxl
+xlrd
