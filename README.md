@@ -20,7 +20,8 @@ version web (Streamlit) et en version bureau (PySide6 / Qt).
 | `tableautarif.csv` | Tarifs des fournisseurs |
 | `assets/` | (optionnel) images de l'interface bureau : `splash.png`, `app_icon.png`, icônes des boutons |
 | `requirements.txt` | Dépendances Python |
-
+|`pysidedeployLinux.spec`| Pour deployement Pyside6 sous linux
+| `pysidedeploywin.spec`| Pour deploiement Pyside6 sous Windows
 Les fichiers `DataCE.mat` et `tableautarif.csv` proviennent de l'archive d'origine
 (`DimceM.zip`) : copiez-les à côté des scripts. Conservez aussi le fichier `LICENSE` d'origine.
 
@@ -126,34 +127,16 @@ Une CE doit comporter au moins un membre producteur pour être simulée.
 - Le prix d'achat de la CE au producteur doit rester inférieur ou égal au prix de vente au
   consommateur.
 
-## Déploiement de la version web (Streamlit Community Cloud)
-
-1. Placez dans un dépôt GitHub : `dimce.py`, `dimce_app.py`, `DataCE.mat`,
-   `tableautarif.csv` et `requirements.txt` (au besoin aussi `dimce_gui_qt.py`, `README.md`
-   et `LICENSE`).
-2. Sur <https://share.streamlit.io>, créez une application depuis ce dépôt et indiquez
-   `dimce_app.py` comme fichier principal.
-
-Remarque : `requirements.txt` contient PySide6, inutile (et volumineux) pour la version web.
-Pour un déploiement allégé, retirez la ligne `PySide6` du fichier utilisé par Streamlit Cloud
-(ou séparez-la dans un `requirements-gui.txt`).
-
 ## Créer un exécutable Windows (version PySide6)
 
 ```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --add-data "DataCE.mat;." --add-data "tableautarif.csv;." --add-data "assets;assets" dimce_gui_qt.py
+Pypyside6-deploy dimce_gui_qt.py -c pysidedeploywin.spec
 ```
-
-L'exécutable est créé dans `dist/`. Sous Linux et macOS, remplacez `;` par `:` dans
-`--add-data`. Si vous n'avez pas de dossier `assets/`, retirez l'option correspondante.
 
 ## Limites connues
 
 - Comportements du code MATLAB conservés tels quels :
-  - en simulation rapide, toute la puissance installée est portée par un seul producteur ;
-  - la facture « avec CE » du consommateur ne tient pas compte de l'option
-    « partage dans un même bâtiment », contrairement au calcul du gain.
+  - en simulation rapide, toute la puissance installée est portée par un seul producteur .
 - L'export Excel écrit des `.xlsx` (le `.xls` n'est pas géré en écriture).
 - L'arrêt d'une simulation dans l'interface bureau n'intervient qu'entre deux étapes ; la
   simulation initiale de la CE (avant l'ajout des consommateurs) ne peut pas être interrompue.
