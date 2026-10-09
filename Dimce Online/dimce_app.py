@@ -137,7 +137,7 @@ def barre_laterale():
     sb.number_input("Prix d'achat CE ← producteur (€/kWh)", min_value=0.0, step=0.01,
                     format="%.3f", key="prix_achat")
     sb.checkbox("Partage dans un même bâtiment (−80 % des frais réseau)", key="partage")
-    sb.button("Configuration par défaut", on_click=reinitialiser, use_container_width=True)
+    sb.button("Configuration par défaut", on_click=reinitialiser, width="stretch")
     sb.divider()
     sb.caption("Contact : dimce@ikmail.com")
 
@@ -237,7 +237,7 @@ def resultats(res: d.ResultatOptimisation):
         st.caption("Factures à l'optimum, avec le poste « Prix énergie » ajusté selon la CE.")
         st.dataframe(pd.DataFrame({"Sans CE": d.facture(res, False, num == 3),
                                    "Avec CE": d.facture(res, True, num == 3)}).round(2),
-                     use_container_width=True)
+                     width="stretch")
 
     aff = pd.DataFrame({
         "Nbr de Conso.": res.table["Nbr de Conso."].astype(int),
@@ -245,7 +245,7 @@ def resultats(res: d.ResultatOptimisation):
         "Surplus Vendu CE": res.table["Surplus Vendu CE"].map("{:.2%}".format),
         "Gain conso.": res.table["Gain conso."].map("{:.2f} €/an".format),
         "Gain prod.": res.table["Gain prod."].map("{:.2f} €/an".format)})
-    st.dataframe(aff, hide_index=True, use_container_width=True)
+    st.dataframe(aff, hide_index=True, width="stretch")
     telechargements(res.table, "optimisation_CE", "opti")
 
 
@@ -267,7 +267,7 @@ def onglet_perso():
     cfg["Consommationannelleparticulier"] = st.column_config.NumberColumn(
         libelles["Consommationannelleparticulier"], min_value=0.0, format="%.1f", default=3500.0)
 
-    edit = st.data_editor(ss.ce_df, num_rows="dynamic", column_config=cfg, use_container_width=True,
+    edit = st.data_editor(ss.ce_df, num_rows="dynamic", column_config=cfg, width="stretch",
                           key=f"ce_editor_{ss.ce_ver}")
     ss.ce_edit_df = edit
 
@@ -341,7 +341,7 @@ def onglet_perso():
     styler = (an.tableau.style
               .apply(_style_ligne, axis=1)
               .format({c: "{:.2f}" for c in an.tableau.columns[1:]}))
-    st.dataframe(styler, hide_index=True, use_container_width=True)
+    st.dataframe(styler, hide_index=True, width="stretch")
     telechargements(an.tableau, "gains_CE", "gains")
 
 
@@ -378,7 +378,7 @@ def onglet_tarifs():
                "(le bouton « Configuration par défaut » les annule).")
     col = st.session_state.tarif_table[[f]].copy()
     col.columns = ["Valeur"]
-    edit = st.data_editor(col, use_container_width=True, key=f"tarifs_{f}", height=500)
+    edit = st.data_editor(col, width="stretch", key=f"tarifs_{f}", height=500)
     st.session_state.tarif_table[f] = pd.to_numeric(edit["Valeur"], errors="coerce").fillna(0.0).values
 
 
