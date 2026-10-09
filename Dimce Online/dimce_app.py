@@ -301,11 +301,12 @@ def onglet_perso():
                  + ce["PuissanceinstalleeSol"].sum() * d.RENDEMENT["Solaire"]
                  + ce["PuissanceinstalleeEol"].sum() * d.RENDEMENT["Eolien"]) if n else 0.0
     if n == 0 or prod == 0:
-        m = st.columns(4)
+        m = st.columns(5)
         m[0].metric("Membres", n)
         m[1].metric("Consommation totale", f"{conso:,.0f} kWh")
         m[2].metric("Production estimée", f"{prod:,.0f} kWh")
         m[3].metric("Volume échangé", "0 kWh")
+        m[4].metric("Volume injecté", "0 kWh")
         if n and prod == 0:
             st.info("Ajoutez au moins un membre producteur pour voir les gains de la CE.")
         return
@@ -316,12 +317,12 @@ def onglet_perso():
     except ValueError as e:
         st.error(str(e))
         return
-    m = st.columns(4)
+    m = st.columns(5)
     m[0].metric("Membres", an.nb_membres)
     m[1].metric("Consommation totale", f"{an.conso_totale:,.0f} kWh")
     m[2].metric("Production estimée", f"{an.production_estimee:,.0f} kWh")
     m[3].metric("Volume échangé", f"{an.volume_echange:,.0f} kWh")
-
+    m[4].metric("Volume injecté", f"{an.volume_injection:,.0f} kWh")
     # --- graphique : on récupère le dict {nom: couleur} renvoyé par tracer_ce_mensuelle
     fig = Figure(figsize=(9, 4.8))
     ax = fig.add_subplot(111)
