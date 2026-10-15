@@ -1,0 +1,1 @@
+from .translator import t, langue_courante, LANGUES, DEFAUT
