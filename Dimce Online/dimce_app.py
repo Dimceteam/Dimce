@@ -27,6 +27,20 @@ st.set_page_config(page_title="DimCE Online", page_icon=str(ICO) if ICO.exists()
 NB_CONSO_MAX = int(os.environ.get("DIMCE_MAX_CONSO", 100))
 NB_SIMUL_PARALLELES = int(os.environ.get("DIMCE_MAX_SIMUL", 2))
 
+# Correspondance entre les colonnes du tableau des gains (dimce.py) et les clés i18n
+COLONNES_GAINS = {
+    "Nom": "gains.nom",
+    "Autosuffisance (%)": "gains.autosuffisance",
+    "Autoconsommation (%)": "gains.autoconsommation",
+    "Achat CE (kWh)": "gains.achat_kwh",
+    "Achat CE (%)": "gains.achat_pct",
+    "Achat CE (€)": "gains.achat_eur",
+    "Surplus vendu CE (kWh)": "gains.surplus_kwh",
+    "Surplus vendu CE (%)": "gains.surplus_pct",
+    "Surplus vendu CE (€)": "gains.surplus_eur",
+    "Gain grâce à la CE (€)": "gains.gain_total",
+}
+
 
 @st.cache_resource
 def _verrou_simulations() -> threading.BoundedSemaphore:
@@ -116,6 +130,11 @@ def _couleur_rgb(c) -> str:
     """Convertit une couleur matplotlib (floats 0-1) en chaîne CSS 'rgb(r,g,b)'."""
     r, g, b = (int(round(255 * v)) for v in c[:3])
     return f"rgb({r},{g},{b})"
+
+
+def _traduire_colonnes_gains(df: pd.DataFrame) -> pd.DataFrame:
+    """Renomme les colonnes du tableau des gains avec les libellés traduits."""
+    return df.rename(columns={col: t(cle) for col, cle in COLONNES_GAINS.items()})
 
 
 # ----------------------------------------------------------------- barre latérale
@@ -279,7 +298,7 @@ def onglet_perso():
     cfg = {"Nom": st.column_config.TextColumn(t("perso.nom"))}
     NOMS = d.COLONNES_CE[1:]
     CLE_I18N = ["perso.conso_part", "perso.conso_usine", "perso.conso_admin",
-            "perso.sol", "perso.eol", "perso.bio", "perso.batt_p", "perso.batt_c"]
+                "perso.sol", "perso.eol", "perso.bio", "perso.batt_p", "perso.batt_c"]
 
     libelles = {nom: t(cle) for nom, cle in zip(NOMS, CLE_I18N)}
 
@@ -353,17 +372,20 @@ def onglet_perso():
     fig.tight_layout()
     st.pyplot(fig)
 
-    # --- tableau des gains avec la colonne "Nom" colorée comme les barres empilées
+    # --- tableau des gains : on renomme les colonnes AVANT de styler
+    tableau_tr = _traduire_colonnes_gains(an.tableau)
+    col_nom = t("gains.nom")
+
     def _style_ligne(row):
-        c = couleurs.get(row["Nom"])
+        c = couleurs.get(row[col_nom])
         if c is None:
             return [""] * len(row)
         css = f"background-color: {_couleur_rgb(c)}; color: white; font-weight: bold"
         return [css] + [""] * (len(row) - 1)
 
-    styler = (an.tableau.style
+    styler = (tableau_tr.style
               .apply(_style_ligne, axis=1)
-              .format({c: "{:.2f}" for c in an.tableau.columns[1:]}))
+              .format({c: "{:.2f}" for c in tableau_tr.columns[1:]}))
     st.dataframe(styler, hide_index=True, width="stretch")
     telechargements(an.tableau, "gains_CE", "gains")
 
@@ -408,8 +430,6 @@ def main():
     init_etat()
     barre_laterale()
     t1, t2, t3 = st.tabs([t("onglet.simulation"), t("onglet.perso"), t("onglet.tarifs")])
-    # t1, t2, t3, t4 = st.tabs([t("onglet.simulation"), t("onglet.perso"),
-    #                           t("onglet.dim"), t("onglet.tarifs")])
     # Ordre d'exécution (différent de l'ordre d'affichage) : les tarifs modifiés puis la CE
     # personnalisée doivent être lus avant les onglets qui en dépendent.
     with t3:
@@ -418,8 +438,6 @@ def main():
         onglet_perso()
     with t1:
         onglet_simulation()
-    # with t4:
-    #     # onglet_dim()
 
 
 main()
